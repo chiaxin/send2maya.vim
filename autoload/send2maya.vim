@@ -54,13 +54,12 @@ class MayaBridge():
         with open(self.temp_file, 'w', encoding='utf-8') as FileHandle:
             FileHandle.write(self.commands)
         if self.language == 'py':
-            main_dict = '__main__.__dict__'
             command = 'import __main__\n'
-            command += 'with open("{0}", "r") as FileHandle:\n'.format(
+            command += 'with open("{0}", "r") as FileHandle:\n    '.format(
                 self.temp_file
             )
-            command += '    exec(FileHandle.readlines(), {0}, {0})'.format(
-                self.main_dict
+            command += 'exec(FileHandle.readlines(), {0}, {0})'.format(
+                '__main__.__dict__'
             )
         elif self.language == 'mel':
             command = 'source "{0}";'.format(self.temp_file)

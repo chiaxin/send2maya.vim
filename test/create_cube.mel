@@ -1,0 +1,9 @@
+
+
+
+{
+    int $number_of_cube = 10;
+    for ($idx = 0 ; $idx < $number_of_cube ; $idx++) {
+        polyCube -name ("Cube_" + string($idx));
+    }
+}
