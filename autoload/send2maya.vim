@@ -1,8 +1,11 @@
 "
 " send2maya.vim
+"
 " Author : Chia Xin Lin (nnnight@gmail.com)
 "
-"
+
+let g:send_2_maya_python_port=7001
+let g:send_2_maya_mel_port=7002
 
 function! s:get_visual_selection()
     let [line_start, column_start] = getpos("'<")[1:2]
@@ -40,7 +43,18 @@ class MayaBridge():
                 self.commands = "".join(FileHandle.readlines())
         else:
             print("Unknown mode : " + mode)
-        self.temp_dir, self.temp_file = tempfile.mkstemp()
+        _, self.temp_file = tempfile.mkstemp(prefix='send2maya')
+
+    @classmethod
+    def port_update(cls):
+        '''
+            Update command port from plug-in global variable.
+        '''
+        py_port = vim.eval('g:send_2_maya_python_port')
+        mel_port= vim.eval('g:send_2_maya_mel_port')
+        cls.ExtensionPortMap['py'] = int(py_port)
+        cls.ExtensionPortMap['mel']= int(mel_port)
+        print('[send2maya] Port : {} (Python), {} (MEL).'.format(py_port, mel_port))
 
     def _wrapper(self) -> str:
         '''
@@ -55,10 +69,10 @@ class MayaBridge():
             FileHandle.write(self.commands)
         if self.language == 'py':
             command = 'import __main__\n'
-            command += 'with open("{0}", "r") as FileHandle:\n    '.format(
-                self.temp_file
+            command +='with open("{0}", "r") as FH:\n'.format(
+                self.temp_file.replace("\\", "/")
             )
-            command += 'exec(FileHandle.readlines(), {0}, {0})'.format(
+            command += '    exec("".join(FH.readlines()), {0}, {0})'.format(
                 '__main__.__dict__'
             )
         elif self.language == 'mel':
@@ -103,6 +117,7 @@ class MayaBridge():
             socket_inst.close()
 
     def run(self):
+        MayaBridge.port_update()
         self._send_to_maya()
 
 if __name__ == '__main__':
